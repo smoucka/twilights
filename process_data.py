@@ -1,37 +1,52 @@
-import csv, struct
-
-def alternate(a):
-	return a[::1]
-
-fieldwidths = (-4, 4, -1, 4, -2, 4, -1, 4, -2, 4, -1, 4, -2, 4, -1, 4, -2, 4, -1, 4, -2, 4, -1, 4, -2, 4, -1, 4, -2, 4, -1, 4, -2, 4, -1, 4, -2, 4, -1, 4, -2, 4, -1, 4, -2, 4, -1, 4)
-
-fmtstring = ' '.join('{}{}'.format(abs(fw), 'x' if fw < 0 else 's') for fw in fieldwidths)
-fieldstruct = struct.Struct(fmtstring)
-parse = fieldstruct.unpack_from
-
+import csv, struct, copy
+	
 # storage
-time_dict = {'jan':[], 'feb':[], 'mar':[], 'apr':[], 'may':[], 'jun':[], 'jul':[], 'aug':[], 'sep':[], 'oct':[], 'nov':[], 'dec':[]}
-sunrise = []
-sunset = []
+times = []
 
-f = open('original_data/rise-set.txt', 'rb')
-head_lines = 9
-# skip header
-for x in range(0,head_lines):
-	f.readline()
-'''	
-for x in range(0,31):
-	for times in parse(f.readline()):
-		sunrise.append(alternate(times))
-'''
-for x in range(0,31):
-	for times in parse(f.readline()):
-		print times
+def rise_set(tp):
+	times.append(tp[0].split(' '))
 
-print sunrise
+def twilights(tp, day):
+	times[day].insert(0, tp[0].split(' ')[0])
+	times[day].append(tp[0].split(' ')[1])
+	
+	
+def parse(iter_num, in_file):
+	day_count = 0
+	# field widths
+	fieldwidths = [[-4,9],[-15,9],[-26,9],[-37,9],[-48,9],[-59,9],[-70,9],[-81,9],[-92,9],[-103,9],[-114,9],[-125,9]]
+	head_lines = 9
 
-'''
-test_line = '01  0729 1633  0713 1710  0634 1747  0540 1824  0451 1859  0421 1930  0422 1941  0448 1919  0522 1832  0555 1739  0632 1649  0709 1624'
-out = parse(test_line)
-print out
-'''
+	f = open('original_data/'+in_file+'.txt', 'rb')
+	
+	for col in fieldwidths:
+		# reset 'f' location to beginning of file and skip header
+		f.seek(0)
+		for x in range(0,head_lines):
+			f.readline()
+		
+		# fixed width parsing
+		fmtstring = ' '.join('{}{}'.format(abs(c), 'x' if c < 0 else 's') for c in col)
+		fieldstruct = struct.Struct(fmtstring)
+		parse = fieldstruct.unpack_from
+		
+		for x in range(0,31):
+			time_pair = parse(f.readline())
+			if time_pair[0] <> '         ':
+				if file_idx == 0:
+					rise_set(time_pair)
+				else:
+					twilights(time_pair, day_count)
+				day_count += 1
+
+files = ['rise_set', 'civil_twilight', 'nautical_twilight', 'astronomical_twilight']
+
+for file_idx, file in enumerate(files):
+	parse(file_idx, file)
+
+with open('times.csv', 'wb') as csvfile:
+	csvwriter = csv.writer(csvfile)
+	csv_head = ['astro_beg', 'naut_beg', 'civ_beg', 'rise', 'set', 'civ_end', 'naut_end', 'astro_end']
+	csvwriter.writerow(csv_head)
+	for row in times:
+		csvwriter.writerow(row)
