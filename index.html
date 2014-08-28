@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Types of twilight</title>
+		<style>
+		</style>
+	</head>
+	<body>
+		<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+		<script src="http://d3js.org/queue.v1.min.js"></script>
+		<script>
+			
+			var margin = {top:50, right:50, bottom:50, left:50},
+				width = 400 - margin.left - margin.right,
+				height = 900 - margin.top - margin.bottom;
+			
+			function convert_time(in_time) {
+				var minutes = parseInt(in_time.substring(0,2)) * 60 + parseInt(in_time.substring(2,4))
+				return minutes
+			}
+			
+			queue()
+				.defer(d3.csv, "/madison_twitimes.csv", function(d, i) {
+					return {
+						day: i,
+						a_beg: convert_time(d.astro_beg),
+						n_beg: convert_time(d.naut_beg),
+						c_beg: convert_time(d.civ_beg),
+						s_beg: convert_time(d.rise),
+						s_end: convert_time(d.set),
+						c_end: convert_time(d.civ_end),
+						n_end: convert_time(d.naut_end),
+						a_end: convert_time(d.astro_end)
+					};
+				}, function(error, rows) {
+					console.log(rows);
+				});
+				.await();
+			
+			function draw() {
+
+			}
+	</body>
+</html>
