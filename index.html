@@ -11,8 +11,8 @@
 		<script type="text/javascript">
 			
 			var margin = {top:50, right:50, bottom:50, left:50},
-				width = 400 - margin.left - margin.right,
-				height = 900 - margin.top - margin.bottom;
+				width = 300 - margin.left - margin.right,
+				height = 700 - margin.top - margin.bottom;
 			
 			var xScale = d3.scale.linear()
 				.domain([0,1440])
@@ -45,19 +45,48 @@
 			);
 			
 			function draw(error, rows) {
-				var bars = svg.selectAll('g.bar')
-					.data(rows)
-					.enter()
-					.append('g');
 
-				bars.append('rect')
-					.attr('width', function(d) {
-						return xScale(d.s_end) - xScale(d.s_beg)
+				g = svg.selectAll("rect")
+					.data(rows)
+					.enter();
+
+				g.append("rect")
+					.attr("width", xScale(1440))
+					.attr("height", 2)
+					.attr("transform", function(d) {
+						return "translate(0, " + parseInt(d.day)*2 + ")"
 					})
-					.attr('height', 2)
-					.attr('transform', function(d) {
+					.style("fill", "#0B3442");
+
+				g.append("rect")
+					.attr("width", function(d) {
+						return xScale(d.n_end)-xScale(d.n_beg)
+					})
+					.attr("height", 2)
+					.attr("transform", function(d) {
+						return "translate(" + xScale(d.n_beg) + ", " + parseInt(d.day)*2 + ")"
+					})
+					.style("fill", "#026789");
+
+				g.append("rect")
+					.attr("width", function(d) {
+						return xScale(d.c_end)-xScale(d.c_beg)
+					})
+					.attr("height", 2)
+					.attr("transform", function(d) {
+						return "translate(" + xScale(d.c_beg) + ", " + parseInt(d.day)*2 + ")"
+					})
+					.style("fill", "#63B4CF");
+
+				g.append("rect")
+					.attr("width", function(d) {
+						return xScale(d.s_end)-xScale(d.s_beg)
+					})
+					.attr("height", 2)
+					.attr("transform", function(d) {
 						return "translate(" + xScale(d.s_beg) + ", " + parseInt(d.day)*2 + ")"
 					})
+					.style("fill", "#FAFCB3");
 			}
 			
 		</script>
