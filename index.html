@@ -18,6 +18,15 @@
 				.domain([0,1440])
 				.range([0,width]);
 
+			var yScale = d3.scale.linear()
+				.domain([0,365])
+				.rangeRound([0,height]);
+
+			var a_color = "#0B3442",
+				n_color = "#026789",
+				c_color = "#63B4CF",
+				s_color = "#FAFCB3";
+
 			var svg = d3.select("body").append("svg")
 				.attr("width", width)
 				.attr("height", height);
@@ -52,41 +61,41 @@
 
 				g.append("rect")
 					.attr("width", xScale(1440))
-					.attr("height", 2)
+					.attr("height", yScale(1))
 					.attr("transform", function(d) {
-						return "translate(0, " + parseInt(d.day)*2 + ")"
+						return "translate(0, " + yScale(d.day) + ")"
 					})
-					.style("fill", "#0B3442");
+					.style("fill", a_color);
 
 				g.append("rect")
 					.attr("width", function(d) {
 						return xScale(d.n_end)-xScale(d.n_beg)
 					})
-					.attr("height", 2)
+					.attr("height", yScale(1))
 					.attr("transform", function(d) {
-						return "translate(" + xScale(d.n_beg) + ", " + parseInt(d.day)*2 + ")"
+						return "translate(" + xScale(d.n_beg) + ", " + yScale(d.day) + ")"
 					})
-					.style("fill", "#026789");
+					.style("fill", n_color);
 
 				g.append("rect")
 					.attr("width", function(d) {
 						return xScale(d.c_end)-xScale(d.c_beg)
 					})
-					.attr("height", 2)
+					.attr("height", yScale(1))
 					.attr("transform", function(d) {
-						return "translate(" + xScale(d.c_beg) + ", " + parseInt(d.day)*2 + ")"
+						return "translate(" + xScale(d.c_beg) + ", " + yScale(d.day) + ")"
 					})
-					.style("fill", "#63B4CF");
+					.style("fill", c_color);
 
 				g.append("rect")
 					.attr("width", function(d) {
 						return xScale(d.s_end)-xScale(d.s_beg)
 					})
-					.attr("height", 2)
+					.attr("height", yScale(1))
 					.attr("transform", function(d) {
-						return "translate(" + xScale(d.s_beg) + ", " + parseInt(d.day)*2 + ")"
+						return "translate(" + xScale(d.s_beg) + ", " + yScale(d.day) + ")"
 					})
-					.style("fill", "#FAFCB3");
+					.style("fill", s_color);
 			}
 			
 		</script>
