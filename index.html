@@ -7,11 +7,10 @@
 	</head>
 	<body>
 		<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
-		<script src="http://d3js.org/queue.v1.min.js"></script>
 		<script type="text/javascript">
 			
-			var margin = {top:50, right:50, bottom:50, left:50},
-				width = 300 - margin.left - margin.right,
+			var margin = {top:50, right:50, bottom:50, left:150},
+				width = 500 - margin.left - margin.right,
 				height = 700 - margin.top - margin.bottom;
 			
 			var xScale = d3.scale.linear()
@@ -36,7 +35,7 @@
 				return minutes
 			}
 			
-			d3.csv("/times.csv", function(d, i) {
+			d3.csv("parsed_data/miami_times.csv", function(d, i) {
 					return {
 						day: i,
 						a_beg: convert_time(d.astro_beg),
