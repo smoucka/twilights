@@ -9,8 +9,8 @@
 		<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
 		<script type="text/javascript">
 			
-			var margin = {top:50, right:50, bottom:50, left:150},
-				width = 500 - margin.left - margin.right,
+			var margin = {top:50, right:50, bottom:50, left:50},
+				width = 400 - margin.left - margin.right,
 				height = 700 - margin.top - margin.bottom;
 			
 			var xScale = d3.scale.linear()
@@ -21,14 +21,30 @@
 				.domain([0,365])
 				.rangeRound([0,height]);
 
+			var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+			var yAxis = d3.svg
+				.axis()
+				.scale(yScale)
+				.orient("left")
+				.ticks(months.length)
+				.tickFormat(function(d) { return d; });
+
 			var a_color = "#0B3442",
 				n_color = "#026789",
 				c_color = "#63B4CF",
 				s_color = "#FAFCB3";
 
 			var svg = d3.select("body").append("svg")
-				.attr("width", width)
-				.attr("height", height);
+				.attr("width", width + margin.left + margin.right)
+				.attr("height", height + margin.top + margin.bottom)
+				.append("g")
+				.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+			svg.append("g")
+				.attr("class", "y axis")
+				.call(yAxis)
+				.attr("transform", "translate(" + (-margin.left/2) + ",0)");
 
 			function convert_time(in_time) {
 				var minutes = parseInt(in_time.substring(0,2)) * 60 + parseInt(in_time.substring(2,4))
@@ -54,11 +70,11 @@
 			
 			function draw(error, rows) {
 
-				g = svg.selectAll("rect")
+				bars = svg.selectAll("rect")
 					.data(rows)
 					.enter();
 
-				g.append("rect")
+				bars.append("rect")
 					.attr("width", xScale(1440))
 					.attr("height", yScale(1))
 					.attr("transform", function(d) {
@@ -66,7 +82,7 @@
 					})
 					.style("fill", a_color);
 
-				g.append("rect")
+				bars.append("rect")
 					.attr("width", function(d) {
 						return xScale(d.n_end)-xScale(d.n_beg)
 					})
@@ -76,7 +92,7 @@
 					})
 					.style("fill", n_color);
 
-				g.append("rect")
+				bars.append("rect")
 					.attr("width", function(d) {
 						return xScale(d.c_end)-xScale(d.c_beg)
 					})
@@ -86,7 +102,7 @@
 					})
 					.style("fill", c_color);
 
-				g.append("rect")
+				bars.append("rect")
 					.attr("width", function(d) {
 						return xScale(d.s_end)-xScale(d.s_beg)
 					})
