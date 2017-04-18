@@ -3,22 +3,39 @@
 	<head>
 		<title>3T</title>
 		<style>
+			.y_axis text {
+				font: 10px sans-serif;
+			}
+
+			.y_axis path,
+			.y_axis line {
+				fill: none;
+				shape_rendering: crispEdges;
+			}
 		</style>
 	</head>
 	<body>
-		<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+		<script src="d3/d3.v3.js" charset="utf-8"></script>
 		<script type="text/javascript">
 			
 			var margin = {top:50, right:50, bottom:50, left:50},
-				width = 400 - margin.left - margin.right,
+				width = 300 - margin.left - margin.right,
 				height = 700 - margin.top - margin.bottom;
 			
 			var xScale = d3.scale.linear()
 				.domain([0,1440])
 				.range([0,width]);
 
+			/*
+			// original scale
 			var yScale = d3.scale.linear()
 				.domain([0,365])
+				.rangeRound([0,height]);
+			*/
+			// try time scale instead of linear for month ticks
+			var yScale = d3.time.scale()
+				.domain([0,365])
+				//.nice(d3.time.month)
 				.rangeRound([0,height]);
 
 			var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -28,7 +45,8 @@
 				.scale(yScale)
 				.orient("left")
 				.ticks(months.length)
-				.tickFormat(function(d) { return d; });
+				//.tickValues(function(d, months) { return d.months; })
+				.tickFormat(function(d, i) { return months[i] });
 
 			var a_color = "#0B3442",
 				n_color = "#026789",
@@ -42,7 +60,7 @@
 				.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 			svg.append("g")
-				.attr("class", "y axis")
+				.attr("class", "y_axis")
 				.call(yAxis)
 				.attr("transform", "translate(" + (-margin.left/2) + ",0)");
 
@@ -81,7 +99,26 @@
 						return "translate(0, " + yScale(d.day) + ")"
 					})
 					.style("fill", a_color);
+				/*
+				// rect calls in for...in loop
+				var twilight_type_prefix = ['n', 'c', 's']
 
+				for (var ttp in twilight_type_prefix) {
+					bars.append("rect")
+						.attr("width", function(d) {
+							return xScale(concat(d, ".", ttp, "_end")) - xScale(concat(d, ".", ttp, "_beg"))
+							//return concat('xScale(d.', ttp, '_end), yScale(d.day)')
+						})
+						.attr("height", yScale(1))
+						.attr("transform", function(d) {
+							return "translate(" + xScale(concat(d, ".", ttp, "_beg")) + ", " + yScale(d.day) + ")"
+							//return concat('translate(xScale(d.', ttp, '_beg, yScale(d.day))')
+							//return "translate(" + xScale(d.concat(ttp, '_beg')) + ", " + yScale(d.day) + ")"
+						})
+						.style("fill", concat(ttp, '_color)'));
+				}
+				*/
+				// individual "rect" calls
 				bars.append("rect")
 					.attr("width", function(d) {
 						return xScale(d.n_end)-xScale(d.n_beg)
@@ -111,6 +148,7 @@
 						return "translate(" + xScale(d.s_beg) + ", " + yScale(d.day) + ")"
 					})
 					.style("fill", s_color);
+					
 			}
 			
 		</script>
