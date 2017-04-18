@@ -3,12 +3,12 @@
 	<head>
 		<title>3T</title>
 		<style>
-			.y_axis text {
+			.x_axis text {
 				font: 10px sans-serif;
 			}
 
-			.y_axis path,
-			.y_axis line {
+			.x_axis path,
+			.x_axis line {
 				fill: none;
 				shape_rendering: crispEdges;
 			}
@@ -19,31 +19,23 @@
 		<script type="text/javascript">
 			
 			var margin = {top:50, right:50, bottom:50, left:50},
-				width = 300 - margin.left - margin.right,
-				height = 700 - margin.top - margin.bottom;
-			
-			var xScale = d3.scale.linear()
-				.domain([0,1440])
-				.range([0,width]);
+				width = 700 - margin.left - margin.right,
+				height = 300 - margin.top - margin.bottom;
 
-			
-			// original scale
 			var yScale = d3.scale.linear()
+				.domain([0,1440])
+				.range([0,height]);
+
+			var xScale = d3.scale.linear()
 				.domain([0,365])
-				.rangeRound([0,height]);
-			/*
-			// try time scale instead of linear for month ticks
-			var yScale = d3.time.scale()
-				.domain([0,365])
-				.nice(d3.time.month)
-				.rangeRound([0,height]);
-			*/
+				.rangeRound([0,width]);
+
 			var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-			var yAxis = d3.svg
+			var xAxis = d3.svg
 				.axis()
-				.scale(yScale)
-				.orient("left")
+				.scale(xScale)
+				.orient("top")
 				.ticks(months.length)
 				//.tickValues(function(d, months) { return d.months; })
 				.tickFormat(function(d, i) { return months[i] });
@@ -60,9 +52,9 @@
 				.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 			svg.append("g")
-				.attr("class", "y_axis")
-				.call(yAxis)
-				.attr("transform", "translate(" + (-margin.left/2) + ",0)");
+				.attr("class", "x_axis")
+				.call(xAxis)
+				.attr("transform", "translate(0, " + (-margin.top/2) + ")");
 
 			function convert_time(in_time) {
 				var minutes = parseInt(in_time.substring(0,2)) * 60 + parseInt(in_time.substring(2,4))
@@ -93,10 +85,10 @@
 					.enter();
 
 				bars.append("rect")
-					.attr("width", xScale(1440))
-					.attr("height", yScale(1))
+					.attr("width", xScale(1))
+					.attr("height", yScale(1440))
 					.attr("transform", function(d) {
-						return "translate(0, " + yScale(d.day) + ")"
+						return "translate(" + xScale(d.day) + ", 0)"
 					})
 					.style("fill", a_color);
 				/*
@@ -120,32 +112,33 @@
 				*/
 				// individual "rect" calls
 				bars.append("rect")
-					.attr("width", function(d) {
-						return xScale(d.n_end)-xScale(d.n_beg)
+					.attr("width", xScale(1))
+					.attr("height", function(d) {
+						return yScale(d.n_end)-yScale(d.n_beg)
 					})
-					.attr("height", yScale(1))
 					.attr("transform", function(d) {
-						return "translate(" + xScale(d.n_beg) + ", " + yScale(d.day) + ")"
+						return "translate(" + xScale(d.day) + ", " + yScale(d.n_beg) + ")"
 					})
 					.style("fill", n_color);
 
 				bars.append("rect")
-					.attr("width", function(d) {
-						return xScale(d.c_end)-xScale(d.c_beg)
+					.attr("width", xScale(1))
+					.attr("height", function(d) {
+						return yScale(d.c_end)-yScale(d.c_beg)
 					})
-					.attr("height", yScale(1))
 					.attr("transform", function(d) {
-						return "translate(" + xScale(d.c_beg) + ", " + yScale(d.day) + ")"
+						return "translate(" + xScale(d.day) + ", " + yScale(d.c_beg) + ")"
 					})
 					.style("fill", c_color);
 
 				bars.append("rect")
-					.attr("width", function(d) {
-						return xScale(d.s_end)-xScale(d.s_beg)
+					.attr("width", xScale(1))
+					.attr("height", function(d) {
+						return yScale(d.s_end)-yScale(d.s_beg)
 					})
-					.attr("height", yScale(1))
+					
 					.attr("transform", function(d) {
-						return "translate(" + xScale(d.s_beg) + ", " + yScale(d.day) + ")"
+						return "translate(" + xScale(d.day) + ", " + yScale(d.s_beg) + ")"
 					})
 					.style("fill", s_color);
 					
