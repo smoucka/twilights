@@ -59,7 +59,9 @@
 			svg.append("g")
 				.attr("class", "x_axis")
 				.call(xAxis)
-				.attr("transform", "translate(0, " + (-margin.top/2) + ")");
+				.attr("transform", "translate(0, " + (-margin.top/2) + ")")
+				.selectAll("text")
+				.attr("x", width/months.length/2); // shift (center) month labels with response to varying width
 			
 			function dateFromDay(year, dayNum) {
 				var date = new Date(year, 0); // initialize date and set year, YY-01-01
