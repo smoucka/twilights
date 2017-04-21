@@ -19,23 +19,28 @@
 		<script type="text/javascript">
 			
 			var margin = {top:50, right:50, bottom:50, left:50},
-				width = 700 - margin.left - margin.right,
+				width = 830 - margin.left - margin.right,
 				height = 300 - margin.top - margin.bottom;
 
 			var yScale = d3.scale.linear()
 				.domain([0,1440])
 				.range([0,height]);
 
+			var xScale = d3.time.scale()
+				.domain([new Date(2017,0,0), new Date(2017,0,365)])
+				.rangeRound([0,width]);
+			/*
+			// linear scale
 			var xScale = d3.scale.linear()
 				.domain([0,365])
 				.rangeRound([0,width]);
-
+			*/
 			var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 			var xAxis = d3.svg
 				.axis()
 				.scale(xScale)
-				.orient("top")
+				//.orient("bottom")
 				.ticks(months.length)
 				//.tickValues(function(d, months) { return d.months; })
 				.tickFormat(function(d, i) { return months[i] });
@@ -55,23 +60,28 @@
 				.attr("class", "x_axis")
 				.call(xAxis)
 				.attr("transform", "translate(0, " + (-margin.top/2) + ")");
+			
+			function dateFromDay(year, dayNum) {
+				var date = new Date(year, 0); // initialize date and set year, YY-01-01
+				return new Date(date.setDate(dayNum)); //add the rest of the date
+			}
 
-			function convert_time(in_time) {
+			function convertTime(in_time) {
 				var minutes = parseInt(in_time.substring(0,2)) * 60 + parseInt(in_time.substring(2,4))
 				return minutes
 			}
 			
 			d3.csv("parsed_data/miami_times.csv", function(d, i) {
 					return {
-						day: i,
-						a_beg: convert_time(d.astro_beg),
-						n_beg: convert_time(d.naut_beg),
-						c_beg: convert_time(d.civ_beg),
-						s_beg: convert_time(d.rise),
-						s_end: convert_time(d.set),
-						c_end: convert_time(d.civ_end),
-						n_end: convert_time(d.naut_end),
-						a_end: convert_time(d.astro_end)
+						day: dateFromDay(2017, i),
+						a_beg: convertTime(d.astro_beg),
+						n_beg: convertTime(d.naut_beg),
+						c_beg: convertTime(d.civ_beg),
+						s_beg: convertTime(d.rise),
+						s_end: convertTime(d.set),
+						c_end: convertTime(d.civ_end),
+						n_end: convertTime(d.naut_end),
+						a_end: convertTime(d.astro_end)
 					};
 				}, function(error, rows) {
 					draw(error, rows);
@@ -85,7 +95,7 @@
 					.enter();
 
 				bars.append("rect")
-					.attr("width", xScale(1))
+					.attr("width", xScale(new Date(2017,0,1))) // Jan 1 using scale sets width to 0
 					.attr("height", yScale(1440))
 					.attr("transform", function(d) {
 						return "translate(" + xScale(d.day) + ", 0)"
@@ -112,7 +122,7 @@
 				*/
 				// individual "rect" calls
 				bars.append("rect")
-					.attr("width", xScale(1))
+					.attr("width", xScale(new Date(2017,0,1)))
 					.attr("height", function(d) {
 						return yScale(d.n_end)-yScale(d.n_beg)
 					})
@@ -122,7 +132,7 @@
 					.style("fill", n_color);
 
 				bars.append("rect")
-					.attr("width", xScale(1))
+					.attr("width", xScale(new Date(2017,0,1)))
 					.attr("height", function(d) {
 						return yScale(d.c_end)-yScale(d.c_beg)
 					})
@@ -132,7 +142,7 @@
 					.style("fill", c_color);
 
 				bars.append("rect")
-					.attr("width", xScale(1))
+					.attr("width", xScale(new Date(2017,0,1)))
 					.attr("height", function(d) {
 						return yScale(d.s_end)-yScale(d.s_beg)
 					})
