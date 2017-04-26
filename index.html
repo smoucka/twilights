@@ -3,14 +3,24 @@
 	<head>
 		<title>3T</title>
 		<style>
-			.x_axis text {
+			.x.axis text {
 				font: 10px sans-serif;
 			}
 
-			.x_axis path,
-			.x_axis line {
+			.x.axis path,
+			.x.axis line {
 				fill: none;
 				shape_rendering: crispEdges;
+			}
+
+			.overlay {
+				fill: none;
+				pointer-events: all;
+			}
+
+			.focus rect {
+				stroke: red;
+				stroke-width: 3;
 			}
 		</style>
 	</head>
@@ -59,7 +69,7 @@
 				.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 			svgViz.append("g")
-				.attr("class", "x_axis")
+				.attr("class", "x axis")
 				.call(xAxis)
 				.attr("transform", "translate(0, " + (-margin.top/2) + ")")
 				.selectAll("text")
@@ -87,21 +97,21 @@
 						n_end: convertTime(d.naut_end),
 						a_end: convertTime(d.astro_end)
 					};
-				}, function(error, rows) {
-					draw(error, rows);
+				}, function(error, data) {
+					draw(error, data);
 				}
 			);
 			
-			function draw(error, rows) {
+			function draw(error, data) {
 
 				bars = svgViz.selectAll("g.dayGroup")
-					.data(rows)
+					.data(data)
 					.enter()
 					.append("g")
 					.attr("class", "dayGroup");
 
 				bars.append("rect")
-					.attr("width", xScale(new Date(2017,0,1))) // Jan 1 using scale sets width to 0
+					.attr("width", xScale(new Date(2017,0,1)))
 					.attr("height", yScale(1440))
 					.attr("transform", function(d) {
 						return "translate(" + xScale(d.day) + ", 0)"
@@ -157,6 +167,29 @@
 						return "translate(" + xScale(d.day) + ", " + yScale(d.s_beg) + ")"
 					})
 					.style("fill", s_color);
+				
+				// g element in which to create bar that will highlight a day when mouseover,
+				// will only display when cursor is within overlay rect
+				var focus = svgViz.append("g")
+					.attr("class", "focus")
+					.style("display", "none");
+
+				focus.append("rect")
+					.attr("width", xScale(new Date(2017,0,1)))
+					.attr("height", yScale(1440));
+
+				svgViz.append("rect")
+					.attr("class", "overlay")
+					.attr("width", width)
+					.attr("height", height)
+					.on("mouseover", function() { focus.style("display", null); })
+					.on("mouseout", function() { focus.style("display", "none"); })
+					.on("mousemove", mousemove);
+
+				function mousemove() {
+					var x0 = xScale.invert(d3.mouse(this)[0])
+					focus.attr("transform", "translate(" + xScale(x0) + ", 0)");
+				}
 					
 			}
 			
