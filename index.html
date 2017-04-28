@@ -27,6 +27,7 @@
 	<body>
 		<div id="map"></div>
 		<div id="viz"></div>
+		<div id="times"></div>
 		<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
 		<script type="text/javascript">
 			
@@ -49,6 +50,8 @@
 			*/
 			var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
+			var bisectDate = d3.bisector(function(d) { return d.day; }).left;
+
 			var xAxis = d3.svg
 				.axis()
 				.scale(xScale)
@@ -57,7 +60,8 @@
 				//.tickValues(function(d, months) { return d.months; })
 				.tickFormat(function(d, i) { return months[i] });
 
-			var a_color = "#0B3442",
+			var night_color = "black",
+				a_color = "#0B3442",
 				n_color = "#026789",
 				c_color = "#63B4CF",
 				s_color = "#FAFCB3";
@@ -85,7 +89,7 @@
 				return minutes
 			}
 			
-			d3.csv("parsed_data/miami_times.csv", function(d, i) {
+			d3.csv("parsed_data/madison_times.csv", function(d, i) {
 					return {
 						day: dateFromDay(2017, i),
 						a_beg: convertTime(d.astro_beg),
@@ -104,6 +108,10 @@
 			
 			function draw(error, data) {
 
+				data.sort(function(a, b) {
+					return a.date - b.date;
+				});
+
 				bars = svgViz.selectAll("g.dayGroup")
 					.data(data)
 					.enter()
@@ -116,7 +124,7 @@
 					.attr("transform", function(d) {
 						return "translate(" + xScale(d.day) + ", 0)"
 					})
-					.style("fill", a_color);
+					.style("fill", night_color);
 				/*
 				// rect calls in for...in loop
 				var twilight_type_prefix = ['n', 'c', 's']
@@ -137,6 +145,16 @@
 				}
 				*/
 				// individual "rect" calls
+				bars.append("rect")
+					.attr("width", xScale(new Date(2017,0,1)))
+					.attr("height", function(d) {
+						return yScale(d.a_end)-yScale(d.a_beg)
+					})
+					.attr("transform", function(d) {
+						return "translate(" + xScale(d.day) + ", " + yScale(d.a_beg) + ")"
+					})
+					.style("fill", a_color);
+
 				bars.append("rect")
 					.attr("width", xScale(new Date(2017,0,1)))
 					.attr("height", function(d) {
@@ -187,8 +205,15 @@
 					.on("mousemove", mousemove);
 
 				function mousemove() {
-					var x0 = xScale.invert(d3.mouse(this)[0])
-					focus.attr("transform", "translate(" + xScale(x0) + ", 0)");
+					var x0 = xScale.invert(d3.mouse(this)[0]),
+						//x0 = Math.floor(x/2)*2,
+						//xDate = new Date(x0).toUTCString()
+						i = bisectDate(data, x0, 1),	// what're the inputs here?
+						d0 = data[i - 1],
+						d1 = data[i],
+						d = x0 - d0.day > d1.day - x0 ? d1 : d0;
+					console.log(d)
+					focus.attr("transform", "translate(" + xScale(d.day) + ", 0)");
 				}
 					
 			}
