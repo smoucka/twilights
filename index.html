@@ -3,6 +3,19 @@
 	<head>
 		<title>3T</title>
 		<style>
+			#times {
+				width: 730px;
+				padding-left: 50px;
+				padding-right: 50px;
+			}
+			table{
+				width: 730px;
+				font-size: 10px;
+				font-family: sans-serif;
+			}
+			td, th {
+				width: 11%;
+			}
 			.x.axis text {
 				font: 10px sans-serif;
 			}
@@ -19,8 +32,13 @@
 			}
 
 			.focus rect {
-				stroke: red;
+				stroke: #8AC7DB;
 				stroke-width: 3;
+			}
+
+			.focus text {
+				font: 10px sans-serif;
+				text-anchor: middle;
 			}
 		</style>
 	</head>
@@ -50,7 +68,9 @@
 			*/
 			var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-			var bisectDate = d3.bisector(function(d) { return d.day; }).left;
+			var bisectDate = d3.bisector(function(d) { return d.day; }).left,
+				formatDate = d3.time.format("%b-%d"),
+				formatDay = function(d) { return formatDate(d)};
 
 			var xAxis = d3.svg
 				.axis()
@@ -72,6 +92,7 @@
 				.append("g")
 				.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+			// create axis
 			svgViz.append("g")
 				.attr("class", "x axis")
 				.call(xAxis)
@@ -79,6 +100,20 @@
 				.selectAll("text")
 				.attr("x", width/months.length/2); // shift (center) month labels with response to varying width
 			
+			// create table parts
+			var table = d3.select("#times").append("table"),
+				thead = table.append("thead"),
+				tbody = table.append("tbody"),
+				columns = ["Astronomical", "Nautical", "Civil", "Sunrise", "Sunset", "Civil", "Nautical", "Astronomical"];
+
+			thead.append("tr")
+					.selectAll("th")
+					.data(columns)
+					.enter()
+					.append("th")
+					.text(function(d) { return d; });
+
+			// date conversion functions for incoming data
 			function dateFromDay(year, dayNum) {
 				var date = new Date(year, 0); // initialize date and set year, YY-01-01
 				return new Date(date.setDate(dayNum)); //add the rest of the date
@@ -91,7 +126,7 @@
 			
 			d3.csv("parsed_data/madison_times.csv", function(d, i) {
 					return {
-						day: dateFromDay(2017, i),
+						day: dateFromDay(2017, i+1),	// (2017, 0) turns out Dec 31 2016, shift to Jan 1
 						a_beg: convertTime(d.astro_beg),
 						n_beg: convertTime(d.naut_beg),
 						c_beg: convertTime(d.civ_beg),
@@ -102,16 +137,21 @@
 						a_end: convertTime(d.astro_end)
 					};
 				}, function(error, data) {
+					
+					data.forEach(function(d) {
+						console.log(d);
+					});
+
 					draw(error, data);
 				}
 			);
 			
 			function draw(error, data) {
-
+				/*
 				data.sort(function(a, b) {
 					return a.date - b.date;
 				});
-
+				*/
 				bars = svgViz.selectAll("g.dayGroup")
 					.data(data)
 					.enter()
@@ -185,35 +225,39 @@
 						return "translate(" + xScale(d.day) + ", " + yScale(d.s_beg) + ")"
 					})
 					.style("fill", s_color);
-				
+
 				// g element in which to create bar that will highlight a day when mouseover,
 				// will only display when cursor is within overlay rect
 				var focus = svgViz.append("g")
-					.attr("class", "focus")
-					.style("display", "none");
+					.attr("class", "focus");
+					//.style("display", "none");
 
 				focus.append("rect")
 					.attr("width", xScale(new Date(2017,0,1)))
 					.attr("height", yScale(1440));
+				
+				focus.append("text")
+					.attr("y", height+margin.top/3)
 
 				svgViz.append("rect")
 					.attr("class", "overlay")
 					.attr("width", width)
 					.attr("height", height)
-					.on("mouseover", function() { focus.style("display", null); })
-					.on("mouseout", function() { focus.style("display", "none"); })
+					//.on("mouseover", function() { focus.style("display", null); })
+					//.on("mouseout", function() { focus.style("display", "none"); })
 					.on("mousemove", mousemove);
 
+				// https://bl.ocks.org/mbostock/3902569
 				function mousemove() {
 					var x0 = xScale.invert(d3.mouse(this)[0]),
-						//x0 = Math.floor(x/2)*2,
-						//xDate = new Date(x0).toUTCString()
 						i = bisectDate(data, x0, 1),	// what're the inputs here?
 						d0 = data[i - 1],
 						d1 = data[i],
 						d = x0 - d0.day > d1.day - x0 ? d1 : d0;
-					console.log(d)
+					//console.log(yScale.invert(d.s_beg));
 					focus.attr("transform", "translate(" + xScale(d.day) + ", 0)");
+					focus.select("text").text(formatDay(d.day));
+					
 				}
 					
 			}
