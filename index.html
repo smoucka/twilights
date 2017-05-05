@@ -13,9 +13,10 @@
 				font-size: 10px;
 				font-family: sans-serif;
 			}
-			td, th {
+			th, td {
 				width: 11%;
 			}
+			
 			.x.axis text {
 				font: 10px sans-serif;
 			}
@@ -45,7 +46,36 @@
 	<body>
 		<div id="map"></div>
 		<div id="viz"></div>
-		<div id="times"></div>
+		<div id="times">
+			<!--
+			<table>
+				<thead>
+					<tr>
+						<th>Astronomical</th>
+						<th>Nautical</th>
+						<th>Civil</th>
+						<th>Sunrise</th>
+						<th>Sunset</th>
+						<th>Civil</th>
+						<th>Nautical</th>
+						<th>Astronomical</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td></td>
+						<td></td>
+						<td></td>
+						<td></td>
+						<td></td>
+						<td></td>
+						<td></td>
+						<td></td>
+					</tr>
+				</tbody>
+			</table>
+		-->
+		</div>
 		<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
 		<script type="text/javascript">
 			
@@ -112,7 +142,7 @@
 					.enter()
 					.append("th")
 					.text(function(d) { return d; });
-
+			
 			// date conversion functions for incoming data
 			function dateFromDay(year, dayNum) {
 				var date = new Date(year, 0); // initialize date and set year, YY-01-01
@@ -123,8 +153,15 @@
 				var minutes = parseInt(in_time.substring(0,2)) * 60 + parseInt(in_time.substring(2,4))
 				return minutes
 			}
+
+			function minutesToTime(min) {
+				var hours = ''+Math.floor(min/60), // convert to string
+					minutes = ''+min%60; // convert to string
+				return hours + ":" + minutes.padStart(2, "0");
+			}
 			
 			d3.csv("parsed_data/madison_times.csv", function(d, i) {
+					//console.log(d);
 					return {
 						day: dateFromDay(2017, i+1),	// (2017, 0) turns out Dec 31 2016, shift to Jan 1
 						a_beg: convertTime(d.astro_beg),
@@ -137,11 +174,12 @@
 						a_end: convertTime(d.astro_end)
 					};
 				}, function(error, data) {
-					
+					//console.log(data);
+					/*
 					data.forEach(function(d) {
 						console.log(d);
 					});
-
+					*/
 					draw(error, data);
 				}
 			);
@@ -149,7 +187,7 @@
 			function draw(error, data) {
 				/*
 				data.sort(function(a, b) {
-					return a.date - b.date;
+					return a.day - b.day;
 				});
 				*/
 				bars = svgViz.selectAll("g.dayGroup")
@@ -245,7 +283,7 @@
 					.attr("height", height)
 					//.on("mouseover", function() { focus.style("display", null); })
 					//.on("mouseout", function() { focus.style("display", "none"); })
-					.on("mousemove", mousemove);
+					.on("click", mousemove);
 
 				// https://bl.ocks.org/mbostock/3902569
 				function mousemove() {
@@ -254,9 +292,20 @@
 						d0 = data[i - 1],
 						d1 = data[i],
 						d = x0 - d0.day > d1.day - x0 ? d1 : d0;
-					//console.log(yScale.invert(d.s_beg));
+					//console.log(d.day + " " + d.s_beg);
+					console.log(d);
 					focus.attr("transform", "translate(" + xScale(d.day) + ", 0)");
 					focus.select("text").text(formatDay(d.day));
+					var times = d3.values(d).slice(1,9); //remove date from array
+					console.log(times);
+
+					tbody.append("tr")
+						.selectAll("td")
+						.data(times)
+						.enter()
+						.append("td")
+						.text(function(d) { return minutesToTime(d); })
+						.style("text-align", "center");
 					
 				}
 					
