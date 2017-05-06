@@ -44,6 +44,7 @@
 		</style>
 	</head>
 	<body>
+		<div id="selector"></div>
 		<div id="map"></div>
 		<div id="viz"></div>
 		<div id="times">
@@ -77,8 +78,20 @@
 		
 		</div>
 		<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+		<script src="http://code.jquery.com/jquery-2.1.0.min.js"></script>
 		<script type="text/javascript">
 			
+			var cities = ["Madison", "Miami"]
+
+			d3.select("#selector").append("select")
+				.attr("id", "selectCity")
+				.selectAll("option")
+				.data(cities)
+				.enter()
+				.append("option")
+				.attr("value", function(d) { return d; })
+				.text( function(d) { return d; });
+
 			var margin = {top:50, right:50, bottom:50, left:50},
 				width = 830 - margin.left - margin.right,
 				height = 300 - margin.top - margin.bottom;
@@ -162,23 +175,29 @@
 				return hours + ":" + minutes.padStart(2, "0");
 			}
 			
-			d3.csv("parsed_data/madison_times.csv", function(d, i) {
-					return {
-						day: dateFromDay(2017, i+1),	// (2017, 0) turns out Dec 31 2016, shift to Jan 1
-						a_beg: convertTime(d.astro_beg),
-						n_beg: convertTime(d.naut_beg),
-						c_beg: convertTime(d.civ_beg),
-						s_beg: convertTime(d.rise),
-						s_end: convertTime(d.set),
-						c_end: convertTime(d.civ_end),
-						n_end: convertTime(d.naut_end),
-						a_end: convertTime(d.astro_end)
-					};
-				}, function(error, data) {
-					draw(error, data);
-				}
-			);
-			
+			var startCity = $("#selectCity").val();
+
+			function readCSV(city) {
+				var readfile = "parsed_data/" + city + "_times.csv"
+
+				d3.csv(readfile, function(d, i) {
+						return {
+							day: dateFromDay(2017, i+1),	// (2017, 0) turns out Dec 31 2016, shift to Jan 1
+							a_beg: convertTime(d.astro_beg),
+							n_beg: convertTime(d.naut_beg),
+							c_beg: convertTime(d.civ_beg),
+							s_beg: convertTime(d.rise),
+							s_end: convertTime(d.set),
+							c_end: convertTime(d.civ_end),
+							n_end: convertTime(d.naut_end),
+							a_end: convertTime(d.astro_end)
+						};
+					}, function(error, data) {
+						draw(error, data);
+					}
+				);
+			}
+
 			function draw(error, data) {
 				/*
 				data.sort(function(a, b) {
@@ -302,6 +321,17 @@
 				}
 					
 			}
+			
+			readCSV(startCity);
+			
+			d3.select("select")
+				.on("change", function() {
+					changeCity = $("#selectCity").val();
+					bars.remove();
+					d3.select("g.focus").remove();
+					d3.select("rect.overlay").remove();
+					readCSV(changeCity);
+				})
 			
 		</script>
 	</body>
