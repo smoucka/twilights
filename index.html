@@ -47,7 +47,7 @@
 		<div id="map"></div>
 		<div id="viz"></div>
 		<div id="times">
-			<!--
+			
 			<table>
 				<thead>
 					<tr>
@@ -74,7 +74,7 @@
 					</tr>
 				</tbody>
 			</table>
-		-->
+		
 		</div>
 		<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
 		<script type="text/javascript">
@@ -129,7 +129,7 @@
 				.attr("transform", "translate(0, " + (-margin.top/2) + ")")
 				.selectAll("text")
 				.attr("x", width/months.length/2); // shift (center) month labels with response to varying width
-			
+			/*
 			// create table parts
 			var table = d3.select("#times").append("table"),
 				thead = table.append("thead"),
@@ -142,7 +142,9 @@
 					.enter()
 					.append("th")
 					.text(function(d) { return d; });
-			
+			*/
+			var td = d3.selectAll("td");
+
 			// date conversion functions for incoming data
 			function dateFromDay(year, dayNum) {
 				var date = new Date(year, 0); // initialize date and set year, YY-01-01
@@ -161,7 +163,6 @@
 			}
 			
 			d3.csv("parsed_data/madison_times.csv", function(d, i) {
-					//console.log(d);
 					return {
 						day: dateFromDay(2017, i+1),	// (2017, 0) turns out Dec 31 2016, shift to Jan 1
 						a_beg: convertTime(d.astro_beg),
@@ -174,12 +175,6 @@
 						a_end: convertTime(d.astro_end)
 					};
 				}, function(error, data) {
-					//console.log(data);
-					/*
-					data.forEach(function(d) {
-						console.log(d);
-					});
-					*/
 					draw(error, data);
 				}
 			);
@@ -283,7 +278,7 @@
 					.attr("height", height)
 					//.on("mouseover", function() { focus.style("display", null); })
 					//.on("mouseout", function() { focus.style("display", "none"); })
-					.on("click", mousemove);
+					.on("mousemove", mousemove);
 
 				// https://bl.ocks.org/mbostock/3902569
 				function mousemove() {
@@ -292,21 +287,18 @@
 						d0 = data[i - 1],
 						d1 = data[i],
 						d = x0 - d0.day > d1.day - x0 ? d1 : d0;
-					//console.log(d.day + " " + d.s_beg);
-					console.log(d);
+
 					focus.attr("transform", "translate(" + xScale(d.day) + ", 0)");
 					focus.select("text").text(formatDay(d.day));
-					var times = d3.values(d).slice(1,9); //remove date from array
-					console.log(times);
-
-					tbody.append("tr")
-						.selectAll("td")
-						.data(times)
-						.enter()
-						.append("td")
-						.text(function(d) { return minutesToTime(d); })
-						.style("text-align", "center");
 					
+					var times = d3.values(d).slice(1,9); //remove date from array
+
+					// td selection, add time array then convert to hr:min
+					td.data(times)
+						.text(function(d) {
+							return minutesToTime(d);
+						})
+						.style("text-align", "center");
 				}
 					
 			}
