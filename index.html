@@ -134,7 +134,7 @@
 				.attr("height", height + margin.top + margin.bottom)
 				.append("g")
 				.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
+			
 			// create axis
 			svgViz.append("g")
 				.attr("class", "x axis")
@@ -142,6 +142,15 @@
 				.attr("transform", "translate(0, " + (-margin.top/2) + ")")
 				.selectAll("text")
 				.attr("x", width/months.length/2); // shift (center) month labels with response to varying width
+			
+			// create black backdrop...blackdrop!
+			svgViz.append("g")
+				.attr("class", "blackdrop")
+				.append("rect")
+				.attr("width", width)
+				.attr("height", height)
+				.attr("transform", "translate(2,0)") // shift 2 right, bars start at (2,0)
+				.style("fill", "black");
 			/*
 			// create table parts
 			var table = d3.select("#times").append("table"),
@@ -204,19 +213,21 @@
 					return a.day - b.day;
 				});
 				*/
+
 				bars = svgViz.selectAll("g.dayGroup")
 					.data(data)
 					.enter()
 					.append("g")
 					.attr("class", "dayGroup");
-
+				/*
 				bars.append("rect")
 					.attr("width", xScale(new Date(2017,0,1)))
 					.attr("height", yScale(1440))
 					.attr("transform", function(d) {
 						return "translate(" + xScale(d.day) + ", 0)"
 					})
-					.style("fill", night_color);
+					.style("fill", "black");
+				*/
 				/*
 				// rect calls in for...in loop
 				var twilight_type_prefix = ['n', 'c', 's']
@@ -238,6 +249,7 @@
 				*/
 				// individual "rect" calls
 				bars.append("rect")
+					.attr("class", "astro")
 					.attr("width", xScale(new Date(2017,0,1)))
 					.attr("height", function(d) {
 						return yScale(d.a_end)-yScale(d.a_beg)
@@ -248,6 +260,7 @@
 					.style("fill", a_color);
 
 				bars.append("rect")
+					.attr("class", "naut")
 					.attr("width", xScale(new Date(2017,0,1)))
 					.attr("height", function(d) {
 						return yScale(d.n_end)-yScale(d.n_beg)
@@ -258,6 +271,7 @@
 					.style("fill", n_color);
 
 				bars.append("rect")
+					.attr("class", "civil")
 					.attr("width", xScale(new Date(2017,0,1)))
 					.attr("height", function(d) {
 						return yScale(d.c_end)-yScale(d.c_beg)
@@ -268,6 +282,7 @@
 					.style("fill", c_color);
 
 				bars.append("rect")
+					.attr("class", "day")
 					.attr("width", xScale(new Date(2017,0,1)))
 					.attr("height", function(d) {
 						return yScale(d.s_end)-yScale(d.s_beg)
