@@ -103,12 +103,7 @@
 			var xScale = d3.time.scale()
 				.domain([new Date(2017,0,0), new Date(2017,0,365)])
 				.rangeRound([0,width]);
-			/*
-			// linear scale
-			var xScale = d3.scale.linear()
-				.domain([0,365])
-				.rangeRound([0,width]);
-			*/
+
 			var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 			var bisectDate = d3.bisector(function(d) { return d.day; }).left,
@@ -118,9 +113,7 @@
 			var xAxis = d3.svg
 				.axis()
 				.scale(xScale)
-				//.orient("bottom")
 				.ticks(months.length)
-				//.tickValues(function(d, months) { return d.months; })
 				.tickFormat(function(d, i) { return months[i] });
 
 			var night_color = "black",
@@ -128,6 +121,10 @@
 				n_color = "#026789",
 				c_color = "#63B4CF",
 				s_color = "#FAFCB3";
+
+			var durationInt = 750;
+
+			var td = d3.selectAll("td");
 
 			var svgViz = d3.select("#viz").append("svg")
 				.attr("width", width + margin.left + margin.right)
@@ -151,21 +148,6 @@
 				.attr("height", height)
 				.attr("transform", "translate(2,0)") // shift 2 right, bars start at (2,0)
 				.style("fill", "black");
-			/*
-			// create table parts
-			var table = d3.select("#times").append("table"),
-				thead = table.append("thead"),
-				tbody = table.append("tbody"),
-				columns = ["Astronomical", "Nautical", "Civil", "Sunrise", "Sunset", "Civil", "Nautical", "Astronomical"];
-
-			thead.append("tr")
-					.selectAll("th")
-					.data(columns)
-					.enter()
-					.append("th")
-					.text(function(d) { return d; });
-			*/
-			var td = d3.selectAll("td");
 
 			// date conversion functions for incoming data
 			function dateFromDay(year, dayNum) {
@@ -183,171 +165,202 @@
 					minutes = ''+min%60; // convert to string
 				return hours + ":" + minutes.padStart(2, "0");
 			}
-			
-			var startCity = $("#selectCity").val();
 
-			function readCSV(city) {
-				var readfile = "parsed_data/" + city + "_times.csv"
-
-				d3.csv(readfile, function(d, i) {
-						return {
-							day: dateFromDay(2017, i+1),	// (2017, 0) turns out Dec 31 2016, shift to Jan 1
-							a_beg: convertTime(d.astro_beg),
-							n_beg: convertTime(d.naut_beg),
-							c_beg: convertTime(d.civ_beg),
-							s_beg: convertTime(d.rise),
-							s_end: convertTime(d.set),
-							c_end: convertTime(d.civ_end),
-							n_end: convertTime(d.naut_end),
-							a_end: convertTime(d.astro_end)
-						};
-					}, function(error, data) {
-						draw(error, data);
-					}
-				);
+			// city file name
+			function cityFile(cityname) {
+				cityFileName = "parsed_data/" + cityname + "_times.csv";
+				return cityFileName;
 			}
 
-			function draw(error, data) {
-				/*
-				data.sort(function(a, b) {
-					return a.day - b.day;
-				});
-				*/
+			
 
-				bars = svgViz.selectAll("g.dayGroup")
-					.data(data)
-					.enter()
-					.append("g")
-					.attr("class", "dayGroup");
-				/*
-				bars.append("rect")
-					.attr("width", xScale(new Date(2017,0,1)))
-					.attr("height", yScale(1440))
-					.attr("transform", function(d) {
-						return "translate(" + xScale(d.day) + ", 0)"
-					})
-					.style("fill", "black");
-				*/
-				/*
-				// rect calls in for...in loop
-				var twilight_type_prefix = ['n', 'c', 's']
+			// create visualization with initial city data
+			var startCity = $("#selectCity").val(),
+				initFile = cityFile(startCity);
+			
+			// load csv, structure and convert data
+			d3.csv(initFile, function(d, i) {
+					return {
+						day: dateFromDay(2017, i+1),	// (2017, 0) turns out Dec 31 2016, shift to Jan 1
+						a_beg: convertTime(d.astro_beg),
+						n_beg: convertTime(d.naut_beg),
+						c_beg: convertTime(d.civ_beg),
+						s_beg: convertTime(d.rise),
+						s_end: convertTime(d.set),
+						c_end: convertTime(d.civ_end),
+						n_end: convertTime(d.naut_end),
+						a_end: convertTime(d.astro_end)
+					};
+				}, function(error, data) {
 
-				for (var ttp in twilight_type_prefix) {
+					// attach data and create g elements
+					bars = svgViz.selectAll("g.dayGroup")
+						.data(data)
+						.enter()
+						.append("g")
+						.attr("class", "dayGroup");
+
+					// create rects for twilights and daytime
 					bars.append("rect")
-						.attr("width", function(d) {
-							return xScale(concat(d, ".", ttp, "_end")) - xScale(concat(d, ".", ttp, "_beg"))
-							//return concat('xScale(d.', ttp, '_end), yScale(d.day)')
+						.attr("class", "astro")
+						.attr("width", xScale(new Date(2017,0,1)))
+						.attr("height", function(d) {
+							return yScale(d.a_end)-yScale(d.a_beg)
 						})
-						.attr("height", yScale(1))
 						.attr("transform", function(d) {
-							return "translate(" + xScale(concat(d, ".", ttp, "_beg")) + ", " + yScale(d.day) + ")"
-							//return concat('translate(xScale(d.', ttp, '_beg, yScale(d.day))')
-							//return "translate(" + xScale(d.concat(ttp, '_beg')) + ", " + yScale(d.day) + ")"
+							return "translate(" + xScale(d.day) + ", " + yScale(d.a_beg) + ")"
 						})
-						.style("fill", concat(ttp, '_color)'));
-				}
-				*/
-				// individual "rect" calls
-				bars.append("rect")
-					.attr("class", "astro")
-					.attr("width", xScale(new Date(2017,0,1)))
-					.attr("height", function(d) {
-						return yScale(d.a_end)-yScale(d.a_beg)
-					})
-					.attr("transform", function(d) {
-						return "translate(" + xScale(d.day) + ", " + yScale(d.a_beg) + ")"
-					})
-					.style("fill", a_color);
+						.style("fill", a_color);
 
-				bars.append("rect")
-					.attr("class", "naut")
-					.attr("width", xScale(new Date(2017,0,1)))
-					.attr("height", function(d) {
-						return yScale(d.n_end)-yScale(d.n_beg)
-					})
-					.attr("transform", function(d) {
-						return "translate(" + xScale(d.day) + ", " + yScale(d.n_beg) + ")"
-					})
-					.style("fill", n_color);
+					bars.append("rect")
+						.attr("class", "naut")
+						.attr("width", xScale(new Date(2017,0,1)))
+						.attr("height", function(d) {
+							return yScale(d.n_end)-yScale(d.n_beg)
+						})
+						.attr("transform", function(d) {
+							return "translate(" + xScale(d.day) + ", " + yScale(d.n_beg) + ")"
+						})
+						.style("fill", n_color);
 
-				bars.append("rect")
-					.attr("class", "civil")
-					.attr("width", xScale(new Date(2017,0,1)))
-					.attr("height", function(d) {
-						return yScale(d.c_end)-yScale(d.c_beg)
-					})
-					.attr("transform", function(d) {
-						return "translate(" + xScale(d.day) + ", " + yScale(d.c_beg) + ")"
-					})
-					.style("fill", c_color);
+					bars.append("rect")
+						.attr("class", "civil")
+						.attr("width", xScale(new Date(2017,0,1)))
+						.attr("height", function(d) {
+							return yScale(d.c_end)-yScale(d.c_beg)
+						})
+						.attr("transform", function(d) {
+							return "translate(" + xScale(d.day) + ", " + yScale(d.c_beg) + ")"
+						})
+						.style("fill", c_color);
 
-				bars.append("rect")
-					.attr("class", "day")
-					.attr("width", xScale(new Date(2017,0,1)))
-					.attr("height", function(d) {
-						return yScale(d.s_end)-yScale(d.s_beg)
-					})
+					bars.append("rect")
+						.attr("class", "day")
+						.attr("width", xScale(new Date(2017,0,1)))
+						.attr("height", function(d) {
+							return yScale(d.s_end)-yScale(d.s_beg)
+						})
+						
+						.attr("transform", function(d) {
+							return "translate(" + xScale(d.day) + ", " + yScale(d.s_beg) + ")"
+						})
+						.style("fill", s_color);
+
+					/*
+					// g element in which to create bar that will highlight a day when mouseover
+					var focus = svgViz.append("g")
+						.attr("class", "focus");
+
+					focus.append("rect")
+						.attr("width", xScale(new Date(2017,0,1)))
+						.attr("height", yScale(1440));
 					
-					.attr("transform", function(d) {
-						return "translate(" + xScale(d.day) + ", " + yScale(d.s_beg) + ")"
-					})
-					.style("fill", s_color);
+					focus.append("text")
+						.attr("y", height+margin.top/3)
 
-				// g element in which to create bar that will highlight a day when mouseover,
-				// will only display when cursor is within overlay rect
-				var focus = svgViz.append("g")
-					.attr("class", "focus");
-					//.style("display", "none");
+					svgViz.append("rect")
+						.attr("class", "overlay")
+						.attr("width", width)
+						.attr("height", height)
+						//.on("mouseover", function() { focus.style("display", null); })
+						//.on("mouseout", function() { focus.style("display", "none"); })
+						.on("mousemove", mousemove);
 
-				focus.append("rect")
-					.attr("width", xScale(new Date(2017,0,1)))
-					.attr("height", yScale(1440));
+					// https://bl.ocks.org/mbostock/3902569
+					function mousemove() {
+						var x0 = xScale.invert(d3.mouse(this)[0]),
+							i = bisectDate(data, x0, 1),	// what're the inputs here?
+							d0 = data[i - 1],
+							d1 = data[i],
+							d = x0 - d0.day > d1.day - x0 ? d1 : d0;
+
+						focus.attr("transform", "translate(" + xScale(d.day) + ", 0)");
+						focus.select("text").text(formatDay(d.day));
+						
+						var times = d3.values(d).slice(1,9); //remove date from array
+
+						// td selection, add time array then convert to hr:min
+						td.data(times)
+							.text(function(d) {
+								return minutesToTime(d);
+							})
+							.style("text-align", "center");
+					}
+					*/
+				}
 				
-				focus.append("text")
-					.attr("y", height+margin.top/3)
+			);
 
-				svgViz.append("rect")
-					.attr("class", "overlay")
-					.attr("width", width)
-					.attr("height", height)
-					//.on("mouseover", function() { focus.style("display", null); })
-					//.on("mouseout", function() { focus.style("display", "none"); })
-					.on("mousemove", mousemove);
+			function update(newCity) {
+				newFile = cityFile(newCity);
 
-				// https://bl.ocks.org/mbostock/3902569
-				function mousemove() {
-					var x0 = xScale.invert(d3.mouse(this)[0]),
-						i = bisectDate(data, x0, 1),	// what're the inputs here?
-						d0 = data[i - 1],
-						d1 = data[i],
-						d = x0 - d0.day > d1.day - x0 ? d1 : d0;
+				d3.csv(newFile, function(d, i) {
+					return {
+						day: dateFromDay(2017, i+1),	// (2017, 0) turns out Dec 31 2016, shift to Jan 1
+						a_beg: convertTime(d.astro_beg),
+						n_beg: convertTime(d.naut_beg),
+						c_beg: convertTime(d.civ_beg),
+						s_beg: convertTime(d.rise),
+						s_end: convertTime(d.set),
+						c_end: convertTime(d.civ_end),
+						n_end: convertTime(d.naut_end),
+						a_end: convertTime(d.astro_end)
+					};
+				}, function (error, data) {
+					bars = svgViz.selectAll("g.dayGroup")
+						.data(data)
 
-					focus.attr("transform", "translate(" + xScale(d.day) + ", 0)");
-					focus.select("text").text(formatDay(d.day));
-					
-					var times = d3.values(d).slice(1,9); //remove date from array
-
-					// td selection, add time array then convert to hr:min
-					td.data(times)
-						.text(function(d) {
-							return minutesToTime(d);
+					bars.select("rect.astro")
+						.transition()
+						.duration(durationInt)
+						.attr("height", function(d) {
+							return yScale(d.a_end)-yScale(d.a_beg)
 						})
-						.style("text-align", "center");
-				}
-					
+						.attr("transform", function(d) {
+							return "translate(" + xScale(d.day) + ", " + yScale(d.a_beg) + ")"
+						});
+
+					bars.select("rect.naut")
+						.transition()
+						.duration(durationInt)
+						.attr("height", function(d) {
+							return yScale(d.n_end)-yScale(d.n_beg)
+						})
+						.attr("transform", function(d) {
+							return "translate(" + xScale(d.day) + ", " + yScale(d.n_beg) + ")"
+						});
+
+					bars.select("rect.civil")
+						.transition()
+						.duration(durationInt)
+						.attr("height", function(d) {
+							return yScale(d.c_end)-yScale(d.c_beg)
+						})
+						.attr("transform", function(d) {
+							return "translate(" + xScale(d.day) + ", " + yScale(d.c_beg) + ")"
+						});
+
+					bars.select("rect.day")
+						.transition()
+						.duration(durationInt)
+						.attr("height", function(d) {
+							return yScale(d.s_end)-yScale(d.s_beg)
+						})
+						
+						.attr("transform", function(d) {
+							return "translate(" + xScale(d.day) + ", " + yScale(d.s_beg) + ")"
+						})
+
+
+				});
 			}
-			
-			readCSV(startCity);
-			
+
 			d3.select("select")
 				.on("change", function() {
 					changeCity = $("#selectCity").val();
-					bars.remove();
-					d3.select("g.focus").remove();
-					d3.select("rect.overlay").remove();
-					readCSV(changeCity);
+					update(changeCity);
 				})
-			
+
 		</script>
 	</body>
 </html>
