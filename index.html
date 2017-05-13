@@ -130,6 +130,7 @@
 				.attr("width", width + margin.left + margin.right)
 				.attr("height", height + margin.top + margin.bottom)
 				.append("g")
+				.attr("class", "container")
 				.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 			
 			// create axis
@@ -148,6 +149,47 @@
 				.attr("height", height)
 				.attr("transform", "translate(2,0)") // shift 2 right, bars start at (2,0)
 				.style("fill", "black");
+
+			// create g for twilight rects
+			var twilights = svgViz.append("g")
+				.attr("class", "twilights");
+
+			// create focus element
+			var focus = svgViz.append("g")
+				.attr("class", "focus");
+
+			focus.append("rect")
+				.attr("width", xScale(new Date(2017,0,1)))
+				.attr("height", yScale(1440));
+			
+			focus.append("text")
+				.attr("y", height+margin.top/3)
+
+			//create overlay element
+			var overlay = svgViz.append("rect")
+				.attr("class", "overlay")
+				.attr("width", width)
+				.attr("height", height)
+				.attr("transform", "translate(2,0)");
+
+			function mousemoveDay(data, x0) {
+				var i = bisectDate(data, x0, 1),	// what're the inputs here?
+					d0 = data[i - 1],
+					d1 = data[i],
+					d = x0 - d0.day > d1.day - x0 ? d1 : d0;
+
+				focus.attr("transform", "translate(" + xScale(d.day) + ", 0)");
+				focus.select("text").text(formatDay(d.day));
+				
+				var times = d3.values(d).slice(1,9); //remove date from array
+
+				// td selection, add time array then convert to hr:min
+				td.data(times)
+					.text(function(d) {
+						return minutesToTime(d);
+					})
+					.style("text-align", "center");
+			}
 
 			// date conversion functions for incoming data
 			function dateFromDay(year, dayNum) {
@@ -172,8 +214,6 @@
 				return cityFileName;
 			}
 
-			
-
 			// create visualization with initial city data
 			var startCity = $("#selectCity").val(),
 				initFile = cityFile(startCity);
@@ -194,7 +234,7 @@
 				}, function(error, data) {
 
 					// attach data and create g elements
-					bars = svgViz.selectAll("g.dayGroup")
+					bars = twilights.selectAll("g.dayGroup")
 						.data(data)
 						.enter()
 						.append("g")
@@ -246,47 +286,11 @@
 						})
 						.style("fill", s_color);
 
-					/*
-					// g element in which to create bar that will highlight a day when mouseover
-					var focus = svgViz.append("g")
-						.attr("class", "focus");
+					overlay.on("mousemove", function(){
+						x0 = xScale.invert(d3.mouse(this)[0]);
+						mousemoveDay(data, x0);
+					});
 
-					focus.append("rect")
-						.attr("width", xScale(new Date(2017,0,1)))
-						.attr("height", yScale(1440));
-					
-					focus.append("text")
-						.attr("y", height+margin.top/3)
-
-					svgViz.append("rect")
-						.attr("class", "overlay")
-						.attr("width", width)
-						.attr("height", height)
-						//.on("mouseover", function() { focus.style("display", null); })
-						//.on("mouseout", function() { focus.style("display", "none"); })
-						.on("mousemove", mousemove);
-
-					// https://bl.ocks.org/mbostock/3902569
-					function mousemove() {
-						var x0 = xScale.invert(d3.mouse(this)[0]),
-							i = bisectDate(data, x0, 1),	// what're the inputs here?
-							d0 = data[i - 1],
-							d1 = data[i],
-							d = x0 - d0.day > d1.day - x0 ? d1 : d0;
-
-						focus.attr("transform", "translate(" + xScale(d.day) + ", 0)");
-						focus.select("text").text(formatDay(d.day));
-						
-						var times = d3.values(d).slice(1,9); //remove date from array
-
-						// td selection, add time array then convert to hr:min
-						td.data(times)
-							.text(function(d) {
-								return minutesToTime(d);
-							})
-							.style("text-align", "center");
-					}
-					*/
 				}
 				
 			);
@@ -351,6 +355,10 @@
 							return "translate(" + xScale(d.day) + ", " + yScale(d.s_beg) + ")"
 						})
 
+					overlay.on("mousemove", function(){
+						x0 = xScale.invert(d3.mouse(this)[0]);
+						mousemoveDay(data, x0);
+					});
 
 				});
 			}
