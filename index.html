@@ -81,7 +81,7 @@
 		<script src="http://code.jquery.com/jquery-2.1.0.min.js"></script>
 		<script type="text/javascript">
 			
-			var cities = ["Madison", "Miami"]
+			var cities = ["N85", "N75", "N65", "N55", "N45", "N35", "N25", "N15", "N5", "S5", "S15", "S25", "S35", "S45", "S55", "S65", "S75", "S85"]
 
 			d3.select("#selector").append("select")
 				.attr("id", "selectCity")
@@ -89,7 +89,8 @@
 				.data(cities)
 				.enter()
 				.append("option")
-				.attr("value", function(d) { return d.toLowerCase(); })
+				//.attr("value", function(d) { return d.toLowerCase(); })
+				.attr("value", function(d) { return d; })
 				.text( function(d) { return d; });
 
 			var margin = {top:50, right:50, bottom:50, left:50},
