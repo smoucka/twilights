@@ -12,6 +12,9 @@ twi_limit_lookup = {'----':['1200','1200'],
 
 def parse_times(tp, day):
 	twi_times = tp[0].split(' ')
+	# method to catch blank values, two in each twilight (and rise/set) type
+	# split creates array with 6 items instead of 2, check position of blank
+	# value (first or second) and replace with appropriate value
 	if len(twi_times) != 2:
 		if twi_times.index('') == 0:
 			twi_times = twi_times[5:]
