@@ -3,6 +3,12 @@
 	<head>
 		<title>3T</title>
 		<style>
+			.graticule {
+				fill: none;
+				stroke: black;
+				stroke-width: 1;
+			}
+
 			#times {
 				width: 730px;
 				padding-left: 50px;
@@ -78,6 +84,8 @@
 		
 		</div>
 		<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+		<script src="http://d3js.org/d3.geo.projection.v0.min.js"></script>
+		<script src="http://d3js.org/topojson.v1.min.js"></script>
 		<script src="http://code.jquery.com/jquery-2.1.0.min.js"></script>
 		<script type="text/javascript">
 			
@@ -95,7 +103,64 @@
 
 			var margin = {top:50, right:50, bottom:50, left:50},
 				width = 830 - margin.left - margin.right,
-				height = 300 - margin.top - margin.bottom;
+				height = 300 - margin.top - margin.bottom,
+				mapheight = 460 - margin.top - margin.bottom;
+
+			var projection = d3.geo.equirectangular()
+				.scale(115)
+				.translate([(width + margin.left + margin.right) / 2, (mapheight + margin.top + margin.bottom) / 2])
+				.precision(.1);
+
+			var path = d3.geo.path()
+				.projection(projection);
+
+			var svgMap = d3.select("#map").append("svg")
+				.attr("width", width + margin.left + margin.right)
+				.attr("height", mapheight + margin.top + margin.bottom)
+				//.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+			// temporary for sizing and aligning map
+			/*svgMap.append("rect")
+				.attr("width", width)
+				.attr("height", mapheight)
+				.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+				.attr("stroke", "black")
+				.attr("fill", "none");
+*/
+			var graticule = d3.geo.graticule()
+				.step([0, 10]); // no longitude lines
+
+			svgMap.append("path")
+				.datum(graticule)
+				.attr("class", "graticule")
+				.attr("d", path);
+
+			// copied directly from http://bl.ocks.org/vigorousnorth/7e075f3cbd44a0cbb55e
+			svgMap.selectAll('text')
+				.data(graticule.lines())
+				.enter().append("text")
+				.text(function(d) {
+						if ((d.coordinates[0][0] == d.coordinates[1][0]) && (d.coordinates[0][0] % 30 == 0)) {return (d.coordinates[0][0]);}
+						else if (d.coordinates[0][1] == d.coordinates[1][1]) {return (d.coordinates[0][1]);}
+					})
+				.attr("class","label")
+				.attr("style", function(d) { return (d.coordinates[0][1] == d.coordinates[1][1]) ? "text-anchor: end" : "text-anchor: middle"; })
+				.attr("dx", function(d) { return (d.coordinates[0][1] == d.coordinates[1][1]) ? -10 : 0; })
+				.attr("dy", function(d) { return (d.coordinates[0][1] == d.coordinates[1][1]) ? 4 : 10; })
+				.attr('transform', function(d) {
+					return ('translate(' + projection(d.coordinates[0])[0] + ',' + projection(d.coordinates[0])[1] + ')')
+				});
+
+			d3.json("geo/land.json", function(error, countries) {
+				svgMap.selectAll("path.country")
+					.data(topojson.feature(countries, countries.objects.land).features)
+					.enter()
+					.append("path")
+					.attr("class", "country")
+					.attr("d", path);
+			});
+
+			
 
 			var yScale = d3.scale.linear()
 				.domain([0,1440])
