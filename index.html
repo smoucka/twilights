@@ -5,8 +5,30 @@
 		<style>
 			.graticule {
 				fill: none;
-				stroke: black;
-				stroke-width: 1;
+				stroke: gray;
+				stroke-width: .3;
+			}
+
+			.gratlabel {
+				font: 300 10px "Helvetica Neue", Helvetica, sans-serif;
+				text-anchor: end;
+			}
+
+			.latbar {
+				pointer-events: all;
+			}
+
+			.latselection {
+				fill: #8AC7DB;
+			}
+
+			.mapoverlay {
+				fill: none;
+				pointer-events: all;
+			}
+
+			.mapfocus rect {
+				fill: #8AC7DB;
 			}
 
 			#times {
@@ -14,17 +36,18 @@
 				padding-left: 50px;
 				padding-right: 50px;
 			}
-			table{
+
+			table {
 				width: 730px;
-				font-size: 10px;
-				font-family: sans-serif;
+				font: 10px "Helvetica Neue", Helvetica, sans-serif;
 			}
+
 			th, td {
 				width: 11%;
 			}
 			
 			.x.axis text {
-				font: 10px sans-serif;
+				font: 10px "Helvetica Neue", Helvetica, sans-serif;
 			}
 
 			.x.axis path,
@@ -33,7 +56,7 @@
 				shape_rendering: crispEdges;
 			}
 
-			.overlay {
+			.vizoverlay {
 				fill: none;
 				pointer-events: all;
 			}
@@ -44,13 +67,13 @@
 			}
 
 			.focus text {
-				font: 10px sans-serif;
+				font: 10px "Helvetica Neue", Helvetica, sans-serif;
 				text-anchor: middle;
 			}
 		</style>
 	</head>
 	<body>
-		<div id="selector"></div>
+		<!--<div id="selector"></div>-->
 		<div id="map"></div>
 		<div id="viz"></div>
 		<div id="times">
@@ -89,26 +112,26 @@
 		<script src="http://code.jquery.com/jquery-2.1.0.min.js"></script>
 		<script type="text/javascript">
 			
-			var cities = ["N85", "N75", "N65", "N55", "N45", "N35", "N25", "N15", "N5", "S5", "S15", "S25", "S35", "S45", "S55", "S65", "S75", "S85"]
-
+			var latitudes = ["N85", "N75", "N65", "N55", "N45", "N35", "N25", "N15", "N5", "S5", "S15", "S25", "S35", "S45", "S55", "S65", "S75", "S85"]
+			/*
 			d3.select("#selector").append("select")
 				.attr("id", "selectCity")
 				.selectAll("option")
-				.data(cities)
+				.data(latitudes)
 				.enter()
 				.append("option")
 				//.attr("value", function(d) { return d.toLowerCase(); })
 				.attr("value", function(d) { return d; })
 				.text( function(d) { return d; });
-
-			var margin = {top:50, right:50, bottom:50, left:50},
+			*/
+			var margin = {top:25, right:50, bottom:25, left:50},
 				width = 830 - margin.left - margin.right,
-				height = 300 - margin.top - margin.bottom,
-				mapheight = 460 - margin.top - margin.bottom;
+				height = 250 - margin.top - margin.bottom,
+				mapheight = 410 - margin.top - margin.bottom;
 
 			var projection = d3.geo.equirectangular()
 				.scale(115)
-				.translate([(width + margin.left + margin.right) / 2, (mapheight + margin.top + margin.bottom) / 2])
+				.translate([width / 2, mapheight / 2])
 				.precision(.1);
 
 			var path = d3.geo.path()
@@ -117,33 +140,39 @@
 			var svgMap = d3.select("#map").append("svg")
 				.attr("width", width + margin.left + margin.right)
 				.attr("height", mapheight + margin.top + margin.bottom)
-				//.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+				.append("g")
+				.attr("class", "container")
+				.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-			// temporary for sizing and aligning map
-			/*svgMap.append("rect")
-				.attr("width", width)
-				.attr("height", mapheight)
-				.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
-				.attr("stroke", "black")
-				.attr("fill", "none");
-*/
+			// create g conatiners for map elements for proper layering
+			mapcontainer = svgMap.append("g")
+				.attr("class", "mapcontainer")
+
+			gratcontainer = svgMap.append("g")
+				.attr("class", "gratcontainer")
+
+			latcontainer = svgMap.append("g")
+				.attr("class", "latcontainer")
+
 			var graticule = d3.geo.graticule()
 				.step([0, 10]); // no longitude lines
 
-			svgMap.append("path")
+			gratcontainer.append("path")
 				.datum(graticule)
 				.attr("class", "graticule")
 				.attr("d", path);
 
 			// copied directly from http://bl.ocks.org/vigorousnorth/7e075f3cbd44a0cbb55e
-			svgMap.selectAll('text')
+			// adjusted text function to add N and S
+			gratcontainer.selectAll('text')
 				.data(graticule.lines())
 				.enter().append("text")
 				.text(function(d) {
-						if ((d.coordinates[0][0] == d.coordinates[1][0]) && (d.coordinates[0][0] % 30 == 0)) {return (d.coordinates[0][0]);}
-						else if (d.coordinates[0][1] == d.coordinates[1][1]) {return (d.coordinates[0][1]);}
+						latstring = d.coordinates[0][1].toString();
+						if (latstring.slice(0,1) == '-') {return latstring.slice(1,3) + ' S';}
+							else {return latstring + ' N';}
 					})
-				.attr("class","label")
+				.attr("class","gratlabel")
 				.attr("style", function(d) { return (d.coordinates[0][1] == d.coordinates[1][1]) ? "text-anchor: end" : "text-anchor: middle"; })
 				.attr("dx", function(d) { return (d.coordinates[0][1] == d.coordinates[1][1]) ? -10 : 0; })
 				.attr("dy", function(d) { return (d.coordinates[0][1] == d.coordinates[1][1]) ? 4 : 10; })
@@ -152,7 +181,7 @@
 				});
 
 			d3.json("geo/land.json", function(error, countries) {
-				svgMap.selectAll("path.country")
+				mapcontainer.selectAll("path.country")
 					.data(topojson.feature(countries, countries.objects.land).features)
 					.enter()
 					.append("path")
@@ -160,8 +189,41 @@
 					.attr("d", path);
 			});
 
-			
+			latScale = d3.scale.linear()
+				.domain([0,18])
+				.rangeRound([0,mapheight]);
 
+			latbars = latcontainer.selectAll(".latbar")
+				.data(latitudes)
+				.enter()
+				.append("rect")
+				.attr("class", "latbar")
+
+			latbars.attr("width", width)
+				.attr("height", latScale(1))
+				.attr("transform", function(d,i) {
+					return ("translate(0," + latScale(i) + ")")
+				})
+				.attr("value", function(d) { return d; })
+				.attr("fill", "none")
+				.on("mouseover", function() {
+					d3.select(this)
+						.attr("fill", "gray");
+				})
+				.on("mouseout", function() {
+					d3.select(this)
+						.attr("fill", "none");
+				})
+				.on("click", function() {
+					d3.select(".latselection").classed("latselection", false);
+					d3.select(this).classed("latselection", true);
+					console.log(d3.select(".latselection").attr("value"));
+				});
+
+			// set class for initial latitude for viz
+			d3.select("rect[value=N45]").classed("latselection", true);
+
+			// day viz stuff
 			var yScale = d3.scale.linear()
 				.domain([0,1440])
 				.range([0,height]);
@@ -203,7 +265,7 @@
 			svgViz.append("g")
 				.attr("class", "x axis")
 				.call(xAxis)
-				.attr("transform", "translate(0, " + (-margin.top/2) + ")")
+				.attr("transform", "translate(0, " + (-margin.top) + ")")
 				.selectAll("text")
 				.attr("x", width/months.length/2); // shift (center) month labels with response to varying width
 			
@@ -229,11 +291,11 @@
 				.attr("height", yScale(1440));
 			
 			focus.append("text")
-				.attr("y", height+margin.top/3)
+				.attr("y", height+margin.bottom/2)
 
-			//create overlay element
-			var overlay = svgViz.append("rect")
-				.attr("class", "overlay")
+			//create vizoverlay element
+			var vizoverlay = svgViz.append("rect")
+				.attr("class", "vizoverlay")
 				.attr("width", width)
 				.attr("height", height)
 				.attr("transform", "translate(2,0)");
@@ -281,7 +343,7 @@
 			}
 
 			// create visualization with initial city data
-			var startCity = $("#selectCity").val(),
+			var startCity = d3.select(".latselection").attr("value"),
 				initFile = cityFile(startCity);
 			
 			// load csv, structure and convert data
@@ -352,7 +414,7 @@
 						})
 						.style("fill", s_color);
 
-					overlay.on("mousemove", function(){
+					vizoverlay.on("mousemove", function(){
 						x0 = xScale.invert(d3.mouse(this)[0]);
 						mousemoveDay(data, x0);
 					});
@@ -421,20 +483,27 @@
 							return "translate(" + xScale(d.day) + ", " + yScale(d.s_beg) + ")"
 						})
 
-					overlay.on("mousemove", function(){
+					vizoverlay.on("mousemove", function(){
 						x0 = xScale.invert(d3.mouse(this)[0]);
 						mousemoveDay(data, x0);
 					});
 
 				});
 			}
-
+			/*
 			d3.select("select")
 				.on("change", function() {
 					changeCity = $("#selectCity").val();
 					update(changeCity);
 				})
+			*/
 
+			latbars.on("click", function() {
+					d3.select(".latselection").classed("latselection", false);
+					d3.select(this).classed("latselection", true);
+					changeCity = d3.select(".latselection").attr("value");
+					update(changeCity);
+				});
 		</script>
 	</body>
 </html>
