@@ -3,6 +3,54 @@
 	<head>
 		<title>3T</title>
 		<style>
+			#explanation {
+				width: 730px;
+				margin-left: 50px;
+				margin-right: 50px;
+				font: 12px "Helvetica Neue", Helvetica, sans-serif;
+			}
+
+			.x.axis text {
+				font: 10px "Helvetica Neue", Helvetica, sans-serif;
+			}
+
+			.x.axis path,
+			.x.axis line {
+				fill: none;
+				shape_rendering: crispEdges;
+			}
+
+			.vizoverlay {
+				fill: none;
+				pointer-events: all;
+			}
+
+			.focus rect {
+				stroke: #8AC7DB;
+				stroke-width: 3;
+			}
+
+			.focus text {
+				font: 10px "Helvetica Neue", Helvetica, sans-serif;
+				text-anchor: middle;
+			}
+
+			#times {
+				width: 730px;
+				padding-left: 50px;
+				padding-right: 50px;
+			}
+
+			table {
+				width: 730px;
+				font: 10px "Helvetica Neue", Helvetica, sans-serif;
+			}
+
+			th, td {
+				width: 11%;
+				height: 12px;
+			}
+
 			.graticule {
 				fill: none;
 				stroke: gray;
@@ -30,51 +78,16 @@
 			.mapfocus rect {
 				fill: #8AC7DB;
 			}
-
-			#times {
-				width: 730px;
-				padding-left: 50px;
-				padding-right: 50px;
-			}
-
-			table {
-				width: 730px;
-				font: 10px "Helvetica Neue", Helvetica, sans-serif;
-			}
-
-			th, td {
-				width: 11%;
-				height: 12px;
-			}
 			
-			.x.axis text {
-				font: 10px "Helvetica Neue", Helvetica, sans-serif;
-			}
-
-			.x.axis path,
-			.x.axis line {
-				fill: none;
-				shape_rendering: crispEdges;
-			}
-
-			.vizoverlay {
-				fill: none;
-				pointer-events: all;
-			}
-
-			.focus rect {
-				stroke: #8AC7DB;
-				stroke-width: 3;
-			}
-
-			.focus text {
-				font: 10px "Helvetica Neue", Helvetica, sans-serif;
-				text-anchor: middle;
-			}
 		</style>
 	</head>
 	<body>
-		<!--<div id="selector"></div>-->
+		<div id="explanation">
+				<p>The intent of this page was to provide a small project to develop some skill using <a href="https://d3js.org/">D3</a>. To explore, mouse over the twilight visualization to view times associated with a particular day. Select a different latitude band to update the twilight visualization.</p>
+				<p>Astronomers divide twilight into three phases based on the angle of the sun below the horizon. These phases, civil, nautical and astronomical, occur between 0-6&deg, 6-12&deg and 12-18&deg, respectively. The times displayed represent dawn, the threshold between the previous phase and the current phase, for times before sunrise, and dusk, the threshold between the current phase and the subsequent phase, for times after sunset.</p>
+				<p>The data was obtained from the United State Naval Observatory (USNO) using their <a href="http://aa.usno.navy.mil/data/docs/RS_OneYear.php">rise/set tool</a> The parameters used to retrieve the data are greatly generalized i.e. all times were retrieved for 90&deg W longitude and timezone +06:00 UTC with no adjustment for Daylight Savings. Further, latitude bands are generalized to every 10&deg. The times were retrieved for every 10&deg from 85&deg N to 85&deg S as the visual differences are not very noticeable in the equatorial region. All times are calculated for 2017.</p>
+		</div>
+		<hr align="left" width="830px">
 		<div id="viz"></div>		
 		<div id="times">
 			
@@ -106,9 +119,7 @@
 			</table>
 		
 		</div>
-
 		<div id="map"></div>
-
 
 		<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
 		<script src="http://d3js.org/d3.geo.projection.v0.min.js"></script>
